@@ -1,0 +1,38 @@
+Type: Package
+Package: LMR
+Title: Theoretical modelling of lossy mode resonance (LMR) based fiber optic temperature sensor utilizing TiO2 sensing layer
+Version: 1.0.0
+Author: Krzysztof Gajowniczek
+Maintainer: Krzysztof Gajowniczek <krzysztof_gajowniczek@sggw.edu.pl>
+Description: Lossy mode resonances can be obtained in the transmission spectrum of cladding removed multimode optical fiber coated with a thin-film. The sensitivity of these devices to changes in the properties ofthe coating or the surrounding medium can be optimized by means of the adequate parameterization of the coating refractive index, the coating thickness, and the surrounding medium refractive index. Means of design, which enable the selection of the best parameters for each specific sensing application, are indicated in this package.
+License: GPL-3 + file LICENSE
+URL: https://github.com/KrzyGajow/LMR
+BugReports: https://github.com/KrzyGajow/LMR/issues
+Depends:
+    R (>= 3.5.0)
+Imports: 
+    DT,
+    doRNG,
+    doSNOW,
+    GA,
+    foreach,
+    Hmisc,
+    magrittr,
+    plotly,
+    purrr,
+    pracma,
+    readr,
+    shiny,
+    shinyjs
+Encoding: UTF-8
+Language: en-US
+RoxygenNote: 7.1.2
+Suggests: 
+    knitr,
+    rmarkdown,
+    parallel,
+    doParallel,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+LazyData: true
+Config/testthat/edition: 3
