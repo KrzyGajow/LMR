@@ -1,6 +1,6 @@
 Type: Package
 Package: LMR
-Title: Theoretical modelling of lossy mode resonance (LMR) based fiber optic temperature sensor utilizing TiO2 sensing layer
+Title: Theoretical modelling of lossy mode resonance (LMR) based fiber optic temperature sensor
 Version: 1.0.0
 Author: Krzysztof Gajowniczek
 Maintainer: Krzysztof Gajowniczek <krzysztof_gajowniczek@sggw.edu.pl>
