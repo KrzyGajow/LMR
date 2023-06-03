@@ -1095,16 +1095,16 @@ runShinyLMR <- function( launch.browser = TRUE ){
         Init <- vector( "list", 33 )
         varMin <- varMax <- Type <- Prec <- Init
         names( Init ) <- names( Prec ) <- names( Type ) <- names( varMin ) <- names( varMax ) <-
-          c("temperature","coreD","L", paste0( "thickLayers", 1:8 ),
+          c("temperature","coreD","Length", paste0( "thickLayers", 1:8 ),
             paste0( rep( c("Cladding", "Sensing", "Core"), each=2 ), c("Re","Im") ),
             paste0( rep( paste0( "Layers", 1:8 ), each=2 ), c("Re","Im") ) )
 
-        Type[ c("temperature","coreD","L", paste0( "thickLayers", 1:nL ) ) ] <- "value"
+        Type[ c("temperature","coreD","Length", paste0( "thickLayers", 1:nL ) ) ] <- "value"
         Type[ names(type) ] <- type
 
         Init$temperature <- input$temperature
         Init$coreD <- input$coreD
-        Init$L <- input$L
+        Init$Length <- input$L
 
         thickLayers <- unlist( lapply( 1:nL, function(i){ eval( parse( text = paste0( "input$dlayer", i ) ) ) } ) )
         Init[ paste0( "thickLayers", 1:nL ) ] <- thickLayers
@@ -1354,19 +1354,19 @@ runShinyLMR <- function( launch.browser = TRUE ){
         output$FitFunMin <- renderUI({
           n <- as.numeric( input$nFitFun )
           lapply( 1:n, function(x){
-            cuts <- cut( c(input$waveMin, input$waveMax), n )
+            cuts <- cut( c(Parameters[1,"waveMin"], Parameters[1,"waveMax"]), n )
             cuts <- lapply( strsplit( gsub( "\\(","", levels( cuts ) ), "]" ),function(x){ as.numeric( unlist( strsplit( x, "," ) ) ) } )
             numericInput( paste0( 'FitFunMin', x ), paste0( 'start_', x ), value = cuts[[x]][1],
-                          input$waveMin, input$waveMax, input$waveStep )
+                          Parameters[1,"waveMin"], Parameters[1,"waveMax"], Parameters[1,"waveStep"] )
           })
         })
         output$FitFunMax <- renderUI({
           n <- as.numeric( input$nFitFun )
           lapply( 1:n, function(x){
-            cuts <- cut( c(input$waveMin, input$waveMax), n )
+            cuts <- cut( c(Parameters[1,"waveMin"], Parameters[1,"waveMax"]), n )
             cuts <- lapply( strsplit( gsub( "\\(","", levels( cuts ) ), "]" ),function(x){ as.numeric( unlist( strsplit( x, "," ) ) ) } )
             numericInput( paste0( 'FitFunMax', x ), paste0( 'end_', x ), value = cuts[[x]][2],
-                          input$waveMin, input$waveMax, input$waveStep )
+                          Parameters[1,"waveMin"], Parameters[1,"waveMax"], Parameters[1,"waveStep"] )
           })
         })
         output$FitFunVal <- renderUI({
@@ -1394,7 +1394,7 @@ runShinyLMR <- function( launch.browser = TRUE ){
         df <- data.frame( s = sapply( 1:n, function(x){ eval( parse( text = sprintf( "input$FitFunMin%s", x ) ) ) } ),
                           e = sapply( 1:n, function(x){ eval( parse( text = sprintf( "input$FitFunMax%s", x ) ) ) } ) )
         weight <- sapply( 1:n, function(x){ eval( parse( text = sprintf( "input$FitFunVal%s", x ) ) ) } )
-        assign( "cuts", c( input$waveMin, df[,2] ), envir = .GlobalEnv )
+        assign( "cuts", c( Parameters[1,"waveMin"], df[,2] ), envir = .GlobalEnv )
         assign( "weight", weight, envir = .GlobalEnv )
       })
 
@@ -1430,9 +1430,9 @@ runShinyLMR <- function( launch.browser = TRUE ){
         output$oPlotX <- renderUI({
           n <- nrow( Result )
           lapply( 1:n, function(x,res){
-            prec <- nchar( gsub("\\.|[1:9]", "", as.character( input$waveStep ) ) )
+            prec <- nchar( gsub("\\.|[1:9]", "", as.character( Parameters[1,"waveStep"] ) ) )
             numericInput( paste0( 'oCoordX', x ), paste0( 'x_', x ), value = round( res[x], prec ),
-                          input$waveMin, input$waveMax, prec )
+                          Parameters[1,"waveMin"], Parameters[1,"waveMax"], prec )
           }, res = Result$Wavelength )
         })
         output$oPlotY <- renderUI({
@@ -1466,9 +1466,9 @@ runShinyLMR <- function( launch.browser = TRUE ){
         output$oPlotX <- renderUI({
           n <- nrow( Result )
           lapply( 1:n, function(x,res){
-            prec <- nchar( gsub("\\.|[1:9]", "", as.character( input$waveStep ) ) )
+            prec <- nchar( gsub("\\.|[1:9]", "", as.character( Parameters[1,"waveStep"] ) ) )
             numericInput( paste0( 'oCoordX', x ), paste0( 'x_', x ), value = round( res[x], prec ),
-                          input$waveMin, input$waveMax, prec )
+                          Parameters[1,"waveMin"], Parameters[1,"waveMax"], prec )
           }, res = Result$Wavelength )
         })
         output$oPlotY <- renderUI({
@@ -1577,12 +1577,14 @@ runShinyLMR <- function( launch.browser = TRUE ){
           eval( parse( text = sprintf( 'input$OptVarsMax%s', x ) ) )} ) ) ) )
         req( !anyNA(oXY$y) )
 
+        attr( Init, "time" ) <- attr( Result, "time" )
+
         RevRes <- ReverseLMR( input$varOpt, Type, oXY$y, Init, Prec,
                               if( exists("weight") ){ weight }else{ 1 },
                               if( exists("cuts") ){ cuts }else{ c( Parameters[1,"waveMin"], Parameters[1,"waveMax"] ) },
                               input$repType, varMin, varMax, ifelse( input$repType == "gray", TRUE, FALSE ),
                               Parameters[1,"waveMin"], Parameters[1,"waveMax"], Parameters[1,"waveStep"],
-                              Parameters[1,"coreDiameter"], Parameters[1,"LengthModifiedRegion"], thickLayers, LayersDf, Parameters[1,"angleMax"],
+                              Parameters[1,"coreDiameter"], Parameters[1,"LengthModifiedRegion"], thickLayers, Parameters[1,"angleMax"],
                               input$popSize, input$pcrossover, input$pmutation,
                               input$maxiter, input$run, input$parallel, input$seed, input$methOpt )
 
@@ -1590,6 +1592,7 @@ runShinyLMR <- function( launch.browser = TRUE ){
         output$RevResTab <- renderDT( RevRes$Out )
         shinyjs::show("AreaSaveOpt")
         assign( "RevRes", RevRes, envir = .GlobalEnv )
+
       })
 
       observeEvent( list( input$ChooseResultOpt ), {

@@ -241,7 +241,7 @@ fullLMR <- function( x, var, typ, tar, w, waveMin, waveMax, waveStep, coreD, L, 
 }
 
 ReverseLMR <- function( var, type, tar, init, prec, w, cuts, repr, varMin, varMax, gray,
-                        waveMin, waveMax, waveStep, coreD, L, thickLayers, Layers, angleMax,
+                        waveMin, waveMax, waveStep, coreD, L, thickLayers, angleMax,
                         popSize, pcrossover, pmutation, maxiter, run, parallel, seed, meth ){
 
   precX <- nchar( gsub( "[^0]", "", as.character( waveStep ) ) )
@@ -277,7 +277,7 @@ ReverseLMR <- function( var, type, tar, init, prec, w, cuts, repr, varMin, varMa
     if( is.null( rstudioapi::getActiveProject() ) ){ currdir }else{ rstudioapi::getActiveProject() }  }else{ currdir }
   write.table( NULL, paste0( pathDef, "/", "RemTime.txt" ),
                sep = ",", row.names = FALSE, col.names = TRUE )
-  write.table( data.frame( 0, 50*length(thickLayers) ), paste0( pathDef, "/", "time.txt" ),
+  write.table( data.frame( 0, attr( init, "time" ) ), paste0( pathDef, "/", "time.txt" ),
                sep = ";", row.names = FALSE, col.names = FALSE )
 
   if( repr == "binary" & meth == "Evolutionary Search" ){
@@ -416,7 +416,8 @@ ReverseLMR <- function( var, type, tar, init, prec, w, cuts, repr, varMin, varMa
       }
     }
 
-    Comb <- Comb[ grep( paste0( "^", Var, "$", collapse = "|" ), names(Comb) ) ]
+    Comb <- Comb[ grep( paste0( "^", Var, collapse = "|" ), names(Comb) ) ]
+
     Comb <- tryCatch( expand.grid( Comb ), error = function(e){ expand.grid( 1 ) } )
     Comb <- data.frame( FitFun = 10^6, Comb )
 
