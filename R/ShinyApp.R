@@ -264,6 +264,8 @@ runShinyLMR <- function( launch.browser = TRUE ){
               sidebarPanel(
                 actionButton( "StartOpt", "Start Optimization"),
                 hr(),
+                htmlOutput("runOPT"),
+                hr(),
                 textOutput("optTime1"),
                 textOutput("optTime2"),
                 textOutput("optTime3"),
@@ -373,11 +375,11 @@ runShinyLMR <- function( launch.browser = TRUE ){
       observeEvent( reactCoord(), {
         for( i in Comb ){
           nc <- eval( parse( text = sprintf( "input$nCoord%s",  i ) ) )
-          if( is.null(nc) ){
+          if( if( is.null(nc) ){ TRUE }else{ is.na(nc) } ){
             eval( parse( text = sprintf( "XY%s$x <- sapply(1:2, function(x){ 1 } )", i ) ) )
             eval( parse( text = sprintf( "XY%s$y <- sapply(1:2, function(y){ 1 } )", i ) ) )
           }else{
-            nc <- as.numeric(nc)
+            nc <- as.numeric( nc )
             eval( parse( text = sprintf( "XY%s$x <- sapply(1:%s, function(x){ eval( parse( text = paste0( 'input$Coord%sX', x) ) ) } )", i,nc,i ) ) )
             eval( parse( text = sprintf( "XY%s$y <- sapply(1:%s, function(y){ eval( parse( text = paste0( 'input$Coord%sY', y) ) ) } )", i,nc,i ) ) )
             # print( eval( parse( text = sprintf( "sapply(1:%s, function(y){ eval( parse( text = paste0( 'input$Coord%sY', y) ) ) } )", nc,i ) ) ) )
@@ -526,7 +528,6 @@ runShinyLMR <- function( launch.browser = TRUE ){
         # }
 
       })
-
       #### Dynamic C S K Render UI ####
       observeEvent( list( reactP(), reactL(), reactRI(), reactOptTP1(), reactOptTP2() ), {
 
@@ -612,9 +613,12 @@ runShinyLMR <- function( launch.browser = TRUE ){
         i <- kij[2]
         j <- kij[1]
 
+        # Validate correctness of all inputs
+        req( ValidInput( session, k, i, j ) )
+
         eval( parse( text = sprintf(
           "output$PlotX%s%s%s <- renderUI({
-            n <- max( as.numeric( input$nCoord%s%s%s ), 2 )
+            n <- max( as.numeric( input$nCoord%s%s%s ), 2, na.rm = TRUE )
             lambda <- seq( input$waveMin, input$waveMax, by = input$waveStep )
             lambda <- lambda[ round( seq( 2, length(lambda)-1, length.out = n ) , 0 ) ]
             lapply( 1:n, function(x){
@@ -623,12 +627,12 @@ runShinyLMR <- function( launch.browser = TRUE ){
         })", k,i,j, k,i,j, k,i,j ) ) )
         eval( parse( text = sprintf(
           "output$PlotY%s%s%s <- renderUI({
-            n <- max( as.numeric( input$nCoord%s%s%s ), 2 )
+            n <- max( as.numeric( input$nCoord%s%s%s ), 2, na.rm = TRUE )
             lapply( 1:n, function(y){
               numericInput( paste0( 'Coord%s%s%sY', y ), paste0( 'y_', y ), value = 1, 0, 4, 0.01 )
             })
         })", k,i,j, k,i,j, k,i,j ) ) )
-# print("value = 1")
+
       })
 
       observeEvent( list( reactResUpl() ), {
@@ -639,9 +643,12 @@ runShinyLMR <- function( launch.browser = TRUE ){
         i <- kij[2]
         j <- kij[1]
 
+        # Validate correctness of all inputs
+        req( ValidInput( session, k, i, j  ) )
+
         eval( parse( text = sprintf(
           "output$PlotX%s%s%s <- renderUI({
-            n <- max( as.numeric( input$nCoord%s%s%s ), 2 )
+            n <- max( as.numeric( input$nCoord%s%s%s ), 2, na.rm = TRUE )
             lambda <- seq( input$waveMin, input$waveMax, by = input$waveStep )
             lambda <- lambda[ round( seq( 2, length(lambda)-1, length.out = n ) , 0 ) ]
             lapply( 1:n, function(x){
@@ -651,7 +658,7 @@ runShinyLMR <- function( launch.browser = TRUE ){
 
         eval( parse( text = sprintf(
           "output$PlotY%s%s%s <- renderUI({
-            n <- max( as.numeric( input$nCoord%s%s%s ), 2 )
+            n <- max( as.numeric( input$nCoord%s%s%s ), 2, na.rm = TRUE )
             lapply( 1:n, function(y){
               numericInput( paste0( 'Coord%s%s%sY', y ), paste0( 'y_', y ), value = 1, 0, 4, 0.01 )
             })
@@ -662,7 +669,7 @@ runShinyLMR <- function( launch.browser = TRUE ){
         eval( parse( text = sprintf( "output$selectCurve%s%s%s <- renderText( '' )", k,i,j ) ) )
         Curve[[ k ]][[ i ]][[ j ]] <<- list( Pred = list(), Est = list(), Mod = list() )
         dfCurve[[ k ]][[ i ]][[ j ]] <<- c()
-# print("reset")
+
       })
 
       observeEvent( list( reactUplCoord() ), {
@@ -672,6 +679,9 @@ runShinyLMR <- function( launch.browser = TRUE ){
         i <- kij[2]
         j <- kij[1]
         req( eval( parse( text = sprintf( "input$uplCoords%s%s%s", k,i,j ) ) ) )
+
+        # Validate correctness of all inputs
+        req( ValidInput( session, k, i, j  ) )
 
         df <- read.table( eval( parse( text = sprintf( "input$uplCoords%s%s%s$datapath", k,i,j ) ) ), header = TRUE, sep = ";", check.names = FALSE, stringsAsFactors = TRUE )
         lambda <- seq( input$waveMin, input$waveMax, input$waveStep )
@@ -700,7 +710,7 @@ runShinyLMR <- function( launch.browser = TRUE ){
           yMax <- max( df[,'Index'] ) + 0.1
           updateNumericInput( session, sprintf( "minY%s%s%s", k,i,j ), value = yMin )
           updateNumericInput( session, sprintf( "maxY%s%s%s", k,i,j ), value = yMax )
-          # print("Upload")
+
         }
 
       })
@@ -714,6 +724,9 @@ runShinyLMR <- function( launch.browser = TRUE ){
         j <- kij[1]
         choose <- eval( parse( text = sprintf( 'input$optTP%s%s%s', k,i,j ) ) )
         req( if( is.null(choose) ){ FALSE }else{ choose == 'Value' } )
+
+        # Validate correctness of all inputs
+        req( ValidInput( session, k, i, j  ) )
 
         eval( parse( text = sprintf(
           "output$out%s%s%s <- renderUI({
@@ -825,6 +838,9 @@ runShinyLMR <- function( launch.browser = TRUE ){
         i <- kij[2]
         j <- kij[1]
 
+        # Validate correctness of all inputs
+        req( ValidInput( session, k, i, j ) )
+
         add <- FALSE
         if( length( Curve[[ k ]][[ i ]][[ j ]]$Pred ) > 0 ){
           dat1 <- as.data.frame( do.call( "cbind", Curve[[ k ]][[ i ]][[ j ]]$Pred ) )
@@ -836,7 +852,7 @@ runShinyLMR <- function( launch.browser = TRUE ){
 
         eval( parse( text = sprintf(
           "output$Plot%s%s%s <- renderPlotly({
-             n <- 1:max( as.numeric( input$nCoord%s%s%s ), 2 )
+             n <- 1:max( as.numeric( input$nCoord%s%s%s ), 2, na.rm = TRUE )
              XX <- XY%s%s%s$x[ n ]
              YY <- XY%s%s%s$y[ n ]
              circles <- map2( XX, YY, ~list( type = 'circle', xanchor = .x, yanchor = .y,
@@ -860,7 +876,7 @@ runShinyLMR <- function( launch.browser = TRUE ){
              }
              p
         })", k,i,j, k,i,j, k,i,j, k,i,j, k,i,j, k,i,j, k,i,j ) ) )
-# print("Init plot")
+
       })
 
       observeEvent( lapply( Comb, function(x){ event_data("plotly_relayout", source = sprintf( "PP%s", x ) ) } ), {
@@ -870,6 +886,9 @@ runShinyLMR <- function( launch.browser = TRUE ){
         k <- kij[3]
         i <- kij[2]
         j <- kij[1]
+
+        # Validate correctness of all inputs
+        req( ValidInput( session, k, i, j ) )
 
         ed <- event_data( "plotly_relayout", source = sprintf( "PP%s%s%s", k,i,j ) )
         shape_anchors <- ed[grepl("^shapes.*anchor$", names(ed))]
@@ -881,7 +900,7 @@ runShinyLMR <- function( launch.browser = TRUE ){
         eval( parse( text = sprintf( "XY%s%s%s$y[row_index] <- round(pts[2],5)", k,i,j ) ) )
         updateNumericInput( session, sprintf( "Coord%s%s%sX%s", k,i,j, row_index ), value = round(pts[1],precX) )
         updateNumericInput( session, sprintf( "Coord%s%s%sY%s", k,i,j, row_index ), value = round(pts[2],5) )
-# print("plot")
+
       })
 
       #### Display Init Table ####
@@ -909,7 +928,10 @@ runShinyLMR <- function( launch.browser = TRUE ){
         i <- kij[2]
         j <- kij[1]
 
-        n <- 1:max( as.numeric( eval( parse( text = sprintf( "input$nCoord%s%s%s", k,i,j ) ) ) ), 2 )
+        # Validate correctness of all inputs
+        req( ValidInput( session, k, i, j ) )
+
+        n <- 1:max( as.numeric( eval( parse( text = sprintf( "input$nCoord%s%s%s", k,i,j ) ) ) ), 2, na.rm = TRUE )
         XX <- eval( parse( text = sprintf( "XY%s%s%s$x[ n ]", k,i,j ) ) )
         YY <- eval( parse( text = sprintf( "XY%s%s%s$y[ n ]", k,i,j ) ) )
         df <- data.frame( Wavelength = XX, Refractive = YY )
@@ -929,7 +951,7 @@ runShinyLMR <- function( launch.browser = TRUE ){
 
           eval( parse( text = sprintf(
             "output$Plot%s%s%s <- renderPlotly({
-             n <- 1:max( as.numeric( input$nCoord%s%s%s ), 2 )
+             n <- 1:max( as.numeric( input$nCoord%s%s%s ), 2, na.rm = TRUE )
              XX <- XY%s%s%s$x[ n ]
              YY <- XY%s%s%s$y[ n ]
              circles <- map2( XX, YY, ~list( type = 'circle', xanchor = .x, yanchor = .y,
@@ -956,7 +978,7 @@ runShinyLMR <- function( launch.browser = TRUE ){
 
         }else{
           eval( parse( text = sprintf(
-            "n <- 1:max( as.numeric( input$nCoord%s%s%s ), 2 )
+            "n <- 1:max( as.numeric( input$nCoord%s%s%s ), 2, na.rm = TRUE )
              XX <- XY%s%s%s$x[ n ]
              YY <- XY%s%s%s$y[ n ]
              req( !is.null(XX[[length(XX)]]) )
@@ -980,6 +1002,10 @@ runShinyLMR <- function( launch.browser = TRUE ){
         j <- kij[1]
         val <- as.numeric( eval( parse( text = sprintf( "input$selectIndex%s%s%s", k,i,j ) ) ) )
         req( val != "" )
+
+        # Validate correctness of all inputs
+        req( ValidInput( session, k, i, j ) )
+
         df <- data.frame( Index = rep( RefInd[ val, "Index" ], length( seq( input$waveMin,
                                                                             input$waveMax, by = input$waveStep ) ) ) )
         LayersList[[ k ]][[ i ]][[ j ]] <<- df[,1]
@@ -999,6 +1025,10 @@ runShinyLMR <- function( launch.browser = TRUE ){
         j <- kij[1]
         val <- eval( parse( text = sprintf( "input$selectCurve%s%s%s", k,i,j ) ) )
         req( val != "" )
+
+        # Validate correctness of all inputs
+        req( ValidInput( session, k, i, j ) )
+
         if( val == "InterPol" ){
           app <- eval( parse( text = sprintf( "App%s%s%s", k,i,j ) ) )
           df <- app$y
@@ -1017,6 +1047,7 @@ runShinyLMR <- function( launch.browser = TRUE ){
         check[ check[,"indx"] == paste0(k,i,j) & check[,"Which"] == "curve", "Type" ] <<- ifelse( val == 0, "inter", "poly" )
 
       })
+
       #### Accept Value ####
       observeEvent( SelectValue( input, reactL() ), {
 
@@ -1026,7 +1057,13 @@ runShinyLMR <- function( launch.browser = TRUE ){
         i <- kij[2]
         j <- kij[1]
         val <- as.numeric( eval( parse( text = sprintf( "input$selectValue%s%s%s", k,i,j ) ) ) )
+        check[ check[,"indx"] == paste0(k,i,j) & check[,"Which"] == "value", "Val" ] <<- val
+
         req( val != "" )
+
+        # Validate correctness of all inputs
+        req( ValidInput( session, k, i, j ) )
+
         df <- data.frame( Index = rep( val, length( seq( input$waveMin, input$waveMax, by = input$waveStep ) ) ) )
         LayersList[[ k ]][[ i ]][[ j ]] <<- df[,1]
         check[ check[,"indx"] == paste0(k,i,j) & check[,"Which"] == "value", "Time" ] <<- Sys.time()
@@ -1037,6 +1074,8 @@ runShinyLMR <- function( launch.browser = TRUE ){
 
       #### CladdingIm SensingIm CoreIm override ####
       observe({
+        # Validate correctness of all inputs
+        req( ValidInput( session, NULL, NULL, NULL ) )
         n <- length( seq( input$waveMin, input$waveMax, by = input$waveStep ) )
         LayersList[[ 1 ]][[ 1 ]][[ 2 ]] <<- rep( 0, n )
         LayersList[[ 2 ]][[ 1 ]][[ 2 ]] <<- rep( 0, n )
@@ -1059,7 +1098,6 @@ runShinyLMR <- function( launch.browser = TRUE ){
         # Im_clad_core <- any( CladdingIm != CoreIm )
         Im_clad_core <- all( Layers$CladdingIm == 0 & Layers$CoreIm == 0 )
         Im_layers <- any( unlist( lapply( Layers[ grep( "^Layers[[:digit:]]Im", names(Layers) ) ], function(x){ any( x!=0 ) } ) ) )
-
         Ok <- aggregate( check$Time, list( check$Name ), function(x){ sum( x == "" ) != 3 } )
         Ok <- Ok[ !Ok$Group.1 %in% grep( sprintf( "Layers [%s-8]", nL+1), Ok$Group.1, value = TRUE ), ]
         # Ok <- Ok[ !( Ok$Group.1 %in% c( "Cladding (Ok)", "Core (Ok)" ) ), ]
@@ -1091,6 +1129,9 @@ runShinyLMR <- function( launch.browser = TRUE ){
         })
 
         req( length(out) == 0 & Re_clad_core & Im_clad_core & Im_layers )
+
+        # Validate correctness of all inputs
+        req( ValidInput( session, NULL, NULL, NULL ) )
 
         Init <- vector( "list", 33 )
         varMin <- varMax <- Type <- Prec <- Init
@@ -1129,7 +1170,7 @@ runShinyLMR <- function( launch.browser = TRUE ){
                              input$L, thickLayers, LayersDf, input$angleMax )
         end <- difftime( Sys.time(), start, units = "secs" )
         attr( Result, "time" ) <- as.numeric( end )
-# print(Result)
+
         if( all( is.na( Result$Transmittance ) ) ){
           output$PlotResErr <- renderText( "All values returned by the model are NaN." )
         }
@@ -1377,7 +1418,7 @@ runShinyLMR <- function( launch.browser = TRUE ){
         })
       })
       observeEvent( list( reactFitFun() ), {
-        # print( input$changed )
+
         req( !is.null( input$changed ) )
         change <- eval( parse( text = sprintf( "input$%s", input$changed ) ) )
         n <- as.numeric( gsub( "[^[:digit:]]", "", input$changed ) )
@@ -1554,7 +1595,6 @@ runShinyLMR <- function( launch.browser = TRUE ){
             }
           }
           comb <- prod( comb )
-          nL <- length( grep( "Layers", colnames( Parameters ) ) )
           output$optTime1 <- renderText( "Based on the current settings it will take approx:" )
           time1 <- Time( comb / input$parallel, attr( Result, "time" ) )
           if( any( unlist( lapply( Type[ input$varOpt ], function(x){ x[1] == "inter" } ) ) ) ){
@@ -1564,7 +1604,7 @@ runShinyLMR <- function( launch.browser = TRUE ){
           }
           output$optTime2 <- renderText( sprintf( "1) Full Search: %s%s.", time1, cond ) )
           it <- ( input$popSize * input$maxiter )
-          time2 <- Time( ( it * nrow( Result ) ) / input$parallel, attr( Result, "time" ) )
+          time2 <- Time( it / input$parallel, attr( Result, "time" ) )
           output$optTime3 <- renderText( sprintf( "2) Evolutionary Search based on %s combinations: %s.", it, time2 ) )
         }
       })
@@ -1579,6 +1619,8 @@ runShinyLMR <- function( launch.browser = TRUE ){
 
         attr( Init, "time" ) <- attr( Result, "time" )
 
+        showModal( modalDialog( HTML( paste0( "Optimization in progress.<br> For the estimated calculation time please see the following file:<br> ", getwd(), "/RemTime.txt" ) ), footer = NULL) )
+
         RevRes <- ReverseLMR( input$varOpt, Type, oXY$y, Init, Prec,
                               if( exists("weight") ){ weight }else{ 1 },
                               if( exists("cuts") ){ cuts }else{ c( Parameters[1,"waveMin"], Parameters[1,"waveMax"] ) },
@@ -1587,6 +1629,9 @@ runShinyLMR <- function( launch.browser = TRUE ){
                               Parameters[1,"coreDiameter"], Parameters[1,"LengthModifiedRegion"], thickLayers, Parameters[1,"angleMax"],
                               input$popSize, input$pcrossover, input$pmutation,
                               input$maxiter, input$run, input$parallel, input$seed, input$methOpt )
+
+        output$runOPT <- renderUI( HTML( sprintf( "<span style=\"color:green\">Last optimization: %s</span>", Sys.time() ) ) )
+        removeModal()
 
         updateSelectInput( session, "ChooseResultOpt", choices = 1:min( 100, nrow( RevRes$Out ) ), selected = "" )
         output$RevResTab <- renderDT( RevRes$Out )
@@ -1623,7 +1668,7 @@ runShinyLMR <- function( launch.browser = TRUE ){
         })
       })
 
-      #### Save Model Optimized ####
+      #### Save Optimized Model ####
       output$saveOpt <- downloadHandler(
 
         filename = function(){
@@ -1639,7 +1684,7 @@ runShinyLMR <- function( launch.browser = TRUE ){
           write.table( RevRes$Transmit[[val]], "optResult.txt", sep = ";", row.names = FALSE )
           Parameters <- data.frame( waveMin = Parameters[1,"waveMin"], waveMax = Parameters[1,"waveMax"], waveStep = Parameters[1,"waveMax"],
                                     temperature = Init$temperature, coreDiameter = Init$coreD,
-                                    LengthModifiedRegion = Init$L,
+                                    LengthModifiedRegion = Init$Length,
                                     ThicknessCoatingLayers = unlist( Init[ grep("thickLayers", names( Init ) ) ] ),
                                     angleMax = Parameters[1,"angleMax"] )
           Parameters <- data.frame( RevRes$Out[val,,drop=FALSE], Parameters, row.names = NULL )

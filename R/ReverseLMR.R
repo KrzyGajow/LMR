@@ -25,7 +25,7 @@ encode <- function( x, Min, Max, prec, n, gr = FALSE ){
 }
 
 gaLMR <- function( x, var, init, typ, tar, prec, spli, w, repr, vMin, vMax, gray, waveMin, waveMax, waveStep, coreD,
-                   L, thickLayers, Layers, angleMax, pop, iter, par, pathDef ){
+                   Length, thickLayers, Layers, angleMax, pop, iter, par, pathDef ){
 
   lambda <- seq( waveMin, waveMax, waveStep )
   Comb <- data.frame( )
@@ -33,7 +33,7 @@ gaLMR <- function( x, var, init, typ, tar, prec, spli, w, repr, vMin, vMax, gray
 
     if( repr == "binary" ){
 
-      if( i %in% c("temperature","coreD","L") ){
+      if( i %in% c("temperature","coreD","Length") ){
 
         vars <- encode( x[ spli[[ i ]] ], vMin[[ i ]],
                         vMax[[ i ]], prec[[ i ]], length( x[ spli[[ i ]] ] ), gray )
@@ -71,7 +71,7 @@ gaLMR <- function( x, var, init, typ, tar, prec, spli, w, repr, vMin, vMax, gray
 
     }else{
 
-      if( i %in% c("temperature","coreD","L") ){
+      if( i %in% c("temperature","coreD","Length") ){
 
         vars <- round( x[ spli[[ i ]] ] / prec[[ i ]] ) * prec[[ i ]]
         eval( parse( text = sprintf( "%s <- vars", i ) ) )
@@ -129,7 +129,7 @@ gaLMR <- function( x, var, init, typ, tar, prec, spli, w, repr, vMin, vMax, gray
 
   if( Re_clad_core & Im_clad_core & Im_layers ){
 
-    res <- consoleLMR( waveMin, waveMax, waveStep, coreD, L, thickLayers, LayersDf, angleMax )
+    res <- consoleLMR( waveMin, waveMax, waveStep, coreD, Length, thickLayers, LayersDf, angleMax )
 
     if( anyNA( res$Transmittance ) ){
 
@@ -162,13 +162,13 @@ gaLMR <- function( x, var, init, typ, tar, prec, spli, w, repr, vMin, vMax, gray
 
 }
 
-fullLMR <- function( x, var, typ, tar, w, waveMin, waveMax, waveStep, coreD, L, thickLayers, Layers, angleMax ){
+fullLMR <- function( x, var, typ, tar, w, waveMin, waveMax, waveStep, coreD, Length, thickLayers, Layers, angleMax ){
 
   lambda <- seq( waveMin, waveMax, waveStep )
 
   for( i in var ){
 
-    if( i %in% c("temperature","coreD","L") ){
+    if( i %in% c("temperature","coreD","Length") ){
 
       eval( parse( text = sprintf( "%s <- x[,i]", i ) ) )
 
@@ -213,7 +213,7 @@ fullLMR <- function( x, var, typ, tar, w, waveMin, waveMax, waveStep, coreD, L, 
 
   if( Re_clad_core & Im_clad_core & Im_layers ){
 
-    out <- consoleLMR( waveMin, waveMax, waveStep, coreD, L, thickLayers, LayersDf, angleMax )
+    out <- consoleLMR( waveMin, waveMax, waveStep, coreD, Length, thickLayers, LayersDf, angleMax )
     # plot( x = out$Wavelength, y = tar, ylim = range( na.omit(out$Transmittance), na.omit(tar) ) ,
     #       type = "l", xlab = "Wavelength", ylab = "Transmittance" )
     # lines( x = out$Wavelength, y = out$Transmittance, col = "red", lty = 2 )
@@ -241,7 +241,7 @@ fullLMR <- function( x, var, typ, tar, w, waveMin, waveMax, waveStep, coreD, L, 
 }
 
 ReverseLMR <- function( var, type, tar, init, prec, w, cuts, repr, varMin, varMax, gray,
-                        waveMin, waveMax, waveStep, coreD, L, thickLayers, angleMax,
+                        waveMin, waveMax, waveStep, coreD, Length, thickLayers, angleMax,
                         popSize, pcrossover, pmutation, maxiter, run, parallel, seed, meth ){
 
   precX <- nchar( gsub( "[^0]", "", as.character( waveStep ) ) )
@@ -307,7 +307,7 @@ ReverseLMR <- function( var, type, tar, init, prec, w, cuts, repr, varMin, varMa
               var = var, typ = type, tar = tar, prec = prec, spli = initSplit, w = ws,
               repr = repr, vMin = varMin, vMax = varMax, gray = gray,
               waveMin = waveMin, waveMax = waveMax, waveStep = waveStep,
-              coreD = coreD, L = L, thickLayers = thickLayers,
+              coreD = coreD, Length = Length, thickLayers = thickLayers,
               Layers = Layers, angleMax = angleMax,
               pop = popSize, iter = maxiter, par = parallel, pathDef = pathDef,
               nBits = length( unlist( Var ) ),
@@ -359,15 +359,15 @@ ReverseLMR <- function( var, type, tar, init, prec, w, cuts, repr, varMin, varMa
               var = var, init = init, typ = type, tar = tar, prec = prec, spli = initSplit, w = ws,
               repr = repr, vMin = unlist( VarMin ), vMax = unlist( VarMax ), gray = NULL,
               waveMin = waveMin, waveMax = waveMax, waveStep = waveStep,
-              coreD = coreD, L = L, thickLayers = thickLayers,
+              coreD = coreD, Length = Length, thickLayers = thickLayers,
               Layers = Layers, angleMax = angleMax,
               pop = popSize, iter = maxiter, par = parallel, pathDef = pathDef,
               suggestions = matrix( unlist( Var ), 1 ),
               lower = unlist( VarMin ), upper = unlist( VarMax ),
               popSize = popSize, pcrossover = pcrossover, pmutation = pmutation,
-              maxiter = maxiter, run = run, seed = seed, parallel = parallel )#parallel
+              maxiter = maxiter, run = run, seed = seed, parallel = F )#parallel
 
-    Out <- data.frame( FitFun = rep( 0, popSize * maxiter ) )
+    Out <- data.frame( FitFun = rep( 10^6, popSize * maxiter ) )
     Transmit <- Laye <- vector( "list", popSize * maxiter )
     gaOpt <- grep( "gaOpt", list.files(), value = TRUE )
     j <- 1
@@ -454,7 +454,7 @@ ReverseLMR <- function( var, type, tar, init, prec, w, cuts, repr, varMin, varMa
 
         res <- fullLMR( x = Comb[i.,-1,drop=FALSE], var = Var, tar = tar, w = ws,
                         waveMin = waveMin, waveMax = waveMax, waveStep = waveStep,
-                        coreD = coreD, L = L, thickLayers = thickLayers,
+                        coreD = coreD, Length = Length, thickLayers = thickLayers,
                         Layers = Layers, angleMax = angleMax )
 
         end <- difftime( Sys.time(), start, units = "secs" )
@@ -486,7 +486,7 @@ ReverseLMR <- function( var, type, tar, init, prec, w, cuts, repr, varMin, varMa
 
           res <- fullLMR( x = Comb[i,-1,drop=FALSE], var = Var, tar = tar, w = ws,
                           waveMin = waveMin, waveMax = waveMax, waveStep = waveStep,
-                          coreD = coreD, L = L, thickLayers = thickLayers,
+                          coreD = coreD, Length = Length, thickLayers = thickLayers,
                           Layers = Layers, angleMax = angleMax )
 
           end <- difftime( Sys.time(), start, units = "secs" )
