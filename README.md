@@ -101,3 +101,7 @@ lines( x = Result321$Wavelength, y = Result321$Transmittance, col = "purple" )
 # Run Shiny web application 
 runShinyLMR()
 ```
+## Tutorials
+
+You can install the released version of LMR from
+[FitFun](https://github.com/KrzyGajow/moviesLMR/blob/main/FitFun.gif) with:

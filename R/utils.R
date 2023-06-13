@@ -336,3 +336,25 @@ StartParallel <- function(parallel = TRUE, ...){
 
   return(parallel)
 }
+
+ValidInput <- function( input, k, i, j ){
+
+  c1 <- if( is.na( input$input$waveMin ) ){ FALSE }else{ input$input$waveMin > 0 }
+  c2 <- if( is.na( input$input$waveMax ) ){ FALSE }else{ input$input$waveMax > 0 }
+  c3 <- if( is.na( input$input$waveStep ) ){ FALSE }else{ input$input$waveStep > 0 }
+  c12 <- if( is.na( input$input$waveMin ) | is.na( input$input$waveMax ) ){ FALSE }else{
+    input$input$waveMin < input$input$waveMax }
+
+  c4 <- if( is.na( input$input$temperature ) ){ FALSE }else{ input$input$temperature > 0 }
+  c5 <- if( is.na( input$input$coreD ) ){ FALSE }else{ input$input$coreD > 0 }
+  c6 <- if( is.na( input$input$L ) ){ FALSE }else{ input$input$L > 0 }
+  c7 <- if( is.na( input$input$angleMax ) ){ FALSE }else{ input$input$angleMax > 0 & input$input$angleMax <= 90 }
+
+  c8 <- eval( parse( text = sprintf( "input$input$nCoord%s%s%s", k,i,j ) ) )
+  c8 <- if( is.null( c8 ) ){ TRUE }else{ if( is.na( c8 ) ){ FALSE }else{ c8 > 0 } }
+
+  out <- c1 & c2 & c12 & c4 & c5 & c6 & c7 & c8
+
+  return( out )
+
+}
